@@ -20,11 +20,10 @@ import csv
 import numpy as np
 import pandas as pd
 import imutils 
-import dlib
 import time 
 import argparse 
 import cv2 
-
+import dlib
 
 #client to send SMS to mobile device
 client = Client(config.SSID, config.AUTH_TOKEN)
@@ -51,11 +50,11 @@ ap.add_argument("-r", "--picamera", type = int, default = -1, help = "whether ra
 args = vars(ap.parse_args())
 
 # EAR threshold value, below which a blink is considered
-EAR_THRESHOLD = 0.25
+EAR_THRESHOLD = 0.24
 # Number of frames to consider for a blink 
 CONSECUTIVE_FRAMES = 15 
 # MAR threshold value
-MAR_THRESHOLD = 21
+MAR_THRESHOLD = 30
 
 # Counters inititalization 
 BLINK_COUNT = 0 
@@ -87,7 +86,7 @@ count_yawn = 0
 while True: 
 	# Frame extraction
 	frame = vs.read()
-	cv2.putText(frame, "PRESS 'e' TO EXIT", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 3) 
+	cv2.putText(frame, "PRESS 'e' TO EXIT", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 3)
 	# Resizing of the frame 
 	frame = imutils.resize(frame, width = 500)
 	# Grayscale conversion of the frame 
@@ -130,6 +129,8 @@ while True:
 		cv2.drawContours(frame, [mouth], -1, (0, 255, 0), 1)
 
 		MAR = mouth_aspect_ratio(mouth)
+		cv2.putText(frame, "EAR: "+str(round(EAR,3)), (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 3)
+		cv2.putText(frame, "MAR: "+str(round(MAR,3)), (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 3)
 		mar_list.append(MAR/10)
 		# Check if EAR < EAR_THRESHOLD, if so then it indicates that a blink is taking place 
 		# Thus, count the number of frames for which the eye remains closed 
@@ -167,6 +168,7 @@ while True:
 			if count_yawn%3 ==0:
                             message = client.messages.create(to=config.TO_NUMBER , from_=config.FROM_NUMBER , body="Warning!! Driver of vehicle number:PB XX 01 XXX, has been continuously yawning. You are advised to take appropriate actions to avoid accident")
                             print(message.sid)
+              
 	#total data collection for plotting
 	for i in ear_list:
 		total_ear.append(i)
@@ -174,12 +176,11 @@ while True:
 		total_mar.append(i)			
 	for i in ts:
 		total_ts.append(i)
-	#display the frame 
+	#display the frame vs
 	cv2.imshow("Output", frame)
 	key = cv2.waitKey(1) & 0xFF 
 	
 	
-
 	if key == ord('e'):
 		break
 
